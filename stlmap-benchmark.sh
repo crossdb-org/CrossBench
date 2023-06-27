@@ -3,7 +3,7 @@ cpu=$1
 loop="1 2 3"
 
 echo "In-Memory Benchmark Test"
-./stlhmap-bench.bin -H -r 0
+./stlmap-bench.bin -H -r 0
 for i in $loop; do ./stlmap-bench.bin -s m -i 1k   -q 40m -u 40m -Q -H -c $cpu; done
 for i in $loop; do ./stlmap-bench.bin -s m -i 10k  -q 20m -u 20m -Q -H -c $cpu; done
 for i in $loop; do ./stlmap-bench.bin -s m -i 100k -q 10m -u 10m -Q -H -c $cpu; done

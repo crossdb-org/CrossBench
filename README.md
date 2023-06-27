@@ -253,4 +253,16 @@ void xxxdb_delete (route_t *pRoute)
 Verify the driver can work
 ```
 ./xxxdb-bench.bin -V
+------ Verify Driver ------
+Insert route
+Query route
+10.1.1.0/24->10.1.1.254 intf: eth1 metric: 1 birth: 1687848698 flags: 0x0
+Update route
+Query route
+10.1.1.0/24->10.1.1.254 intf: eth1 metric: 1 birth: 1687848708 flags: 0x0
+Delete route
+Query route
+crossdb error: status = -4, no row found
+10.1.1.0/24
+------ Verify Done ------
 ```

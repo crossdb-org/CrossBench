@@ -1,7 +1,3 @@
----
-template: overrides/blog.html
----
-
 # CrossDB Benchmark
 
 [**CrossBench**](https://github.com/crossdb-org/CrossBench) is an utility designed for evaluating performance of embedded databases.

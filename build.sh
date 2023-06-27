@@ -1,4 +1,4 @@
-[ "$1" == "clean" ] && rm -rf _benchmarkdb && rm -rf *.bin && rm -rf *.exe && rm -rf *.obj && rm -rf *.o && exit
+[ "$1" == "clean" ] && rm -rf _benchmarkdb && rm -rf /tmp/_benchmarkdb && rm -rf *.bin && exit
 
 echo "Build crossdb-bench.bin"
 gcc -o crossdb-bench.bin crossdb-bench.c -I.. -lcrossdb -O3 -Wall -pthread -ldl

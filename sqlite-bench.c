@@ -132,7 +132,20 @@ const char* sqlite_create (char *dbname, dbtype_e type, keytype_e key, uint32_t 
 
 void sqlite_close ()
 {
-	int status = sqlite3_close(pDb);
+	int status = sqlite3_finalize(insert_stmt);
+	error_check(status);
+	status = sqlite3_finalize(query_stmt);
+	error_check(status);
+	status = sqlite3_finalize(update_stmt);
+	error_check(status);
+	status = sqlite3_finalize(delete_stmt);
+	error_check(status);
+	status = sqlite3_finalize(begin_trans_stmt);
+	error_check(status);
+	status = sqlite3_finalize(end_trans_stmt);
+	error_check(status);
+
+	status = sqlite3_close(pDb);
 	error_check(status);
 }
 

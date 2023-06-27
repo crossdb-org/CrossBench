@@ -82,6 +82,8 @@ void lmdb_insert (route_t* pRoute)
 	if (NULL == s_txn) {
 		rc = mdb_txn_begin(env, NULL, 0, &txn);
 		CHECK (rc, "mdb_txn_begin");
+	} else {
+		txn = s_txn;
 	}
 
 	route_key rtkey;
@@ -114,6 +116,8 @@ bool lmdb_query (route_t* pRoute)
 	if (NULL == s_txn) {
 		rc = mdb_txn_begin(env, NULL, MDB_RDONLY, &txn);
 		CHECK (rc, "mdb_txn_begin");
+	} else {
+		txn = s_txn;
 	}
 
 	route_key rtkey;
@@ -149,6 +153,8 @@ void lmdb_delete (route_t* pRoute)
 	if (NULL == s_txn) {
 		rc = mdb_txn_begin(env, NULL, 0, &txn);
 		CHECK (rc, "mdb_txn_begin");
+	} else {
+		txn = s_txn;
 	}
 
 	route_key rtkey;
@@ -178,6 +184,8 @@ bool lmdb_update (route_t* pRoute)
 	if (NULL == s_txn) {
 		rc = mdb_txn_begin(env, NULL, 0, &txn);
 		CHECK (rc, "mdb_txn_begin");
+	} else {
+		txn = s_txn;
 	}
 
 	route_key rtkey;

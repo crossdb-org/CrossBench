@@ -100,15 +100,15 @@ int main (int argc, char **argv)
 	int 			delete_count = DFT_ROW_COUNT;
 	int				cpuid = -1;
 
-	bool			sequential = 0, verify = 0;
+	bool			sequential = false, verify = false, header = false;
 	int				insert_tps = 0, load_tps = 0, query_qps = 0, update_tps = 0, delete_tps = 0;
 
-	while ((ch = getopt(argc, argv, "t:k:l:i:q:u:d:r:c:sVQh")) != -1) {
+	while ((ch = getopt(argc, argv, "s:k:l:i:q:u:d:r:c:SVQHh")) != -1) {
 		switch (ch) {
 		case 'h':
 			printf ("Usage: {count unit can be k or K (*1000)  m or M (*1000000)}\n");
             printf ("  -h                        show this help\n");
-            printf ("  -t <db type>              ramdisk | inmem | ondisk, default is ramdisk\n");
+            printf ("  -s <db storage>           ramdisk | inmem | ondisk, default is ramdisk\n");
             printf ("                            shortcut r: ramdisk  m: inmem    d: ondisk\n");
             printf ("                            ondisk store db in current folder crossbench\n");
             printf ("  -i <insert count>         default %d, do insert test, conflict with -l load\n", insert_count);
@@ -120,13 +120,14 @@ int main (int argc, char **argv)
             printf ("  -l <load count>           quick load data, conflict with -i insert\n");        
             printf ("  -k <key type>             default | hash | tree\n");
             printf ("                            shortcut h: hash  t: tree    d: default\n");
-            printf ("  -s                        sequential, defaut is random\n");
+            printf ("  -S                        sequential, defaut is random\n");
             printf ("  -V                        verify driver basic CRUD operations\n");
             printf ("  -Q                        quiet mode, only show last result\n");
+            printf ("  -H                        show header, if -Q is set, then don't show header\n");
 			printf ("\nExample:\n");
             printf ("  default: do ramdisk random mode test, insert 1M rows, query 1M times, update 1M times, delete 1M rows\n");
-            printf ("     -t m: do inmem random mode test,   insert 1M rows, query 1M times, update 1M times, delete 1M rows\n");
-            printf ("     -t d: do ondisk random mode test,  insert 1M rows, query 1M times, update 1M times, delete 1M rows\n");
+            printf ("     -s m: do inmem random mode test,   insert 1M rows, query 1M times, update 1M times, delete 1M rows\n");
+            printf ("     -s d: do ondisk random mode test,  insert 1M rows, query 1M times, update 1M times, delete 1M rows\n");
             printf ("     -i 500k -q 5m:            do ramdisk random mode test, insert 500K rows, query 5M times, updat 1M times, delete 500k rows\n");
             printf ("     -i 10k -q 0 -u 0 -d 0:    do ramdisk random mode test, insert 10K rows\n");
             printf ("     -r 10k -q 100k -u 0 -d 0: do ramdisk random mode test, query  100K times\n");
@@ -134,7 +135,7 @@ int main (int argc, char **argv)
             printf ("     -r 10k -q 0 -u 0 -d 10k:  do ramdisk random mode test, delete 10K rows\n");
             printf ("     -V:  verify db driver is ok\n");
 			return -1;
-		case 't':
+		case 's':
 			if (('m' == optarg[0]) || !strcmp (optarg, "inmem")) { 
 				type = DB_INMEM;
 			} else if (('d' == optarg[0]) || !strcmp (optarg, "ondisk")) { 
@@ -178,13 +179,16 @@ int main (int argc, char **argv)
 		case 'c':
 			cpuid = atoi (optarg);
 			break;
-		case 's':
+		case 'S':
 			sequential = true;
 			break;
 		case 'V':
 			verify = true;
 		case 'Q':
 			s_quiet = true;
+			break;
+		case 'H':
+			header = true;
 			break;
 		}
 	}
@@ -218,6 +222,11 @@ int main (int argc, char **argv)
 		row_count = load_count + insert_count;
 	}
 	if (0 == row_count) {
+		if (header) {
+			printf ("%16s\t%8s\t%8s\t%8s\t%8s\t%8s\n", "DB", "Rows", "Insert", "Query", "Update", "Delete");
+			return 0;
+		}
+		
 		printf ("Both load data and insert test are not set, only one can be set\n");
 		return -1;
 	}
@@ -300,6 +309,8 @@ int main (int argc, char **argv)
 		}
 
 		printf ("------ Verify Done ------\n");
+
+		db_close ();
 		return 0;
 	}
 
@@ -330,7 +341,7 @@ int main (int argc, char **argv)
 		ts = timestamp_us() - ts;
 		load_tps = (int64_t)row_count*1000000/ts;
 		if (!s_quiet) {
-			printf ("\nLoad rows: %d    Use time: %dus    TPS: %d\n\n", row_count, (int)ts, load_tps);
+			printf ("\nLoad rows: %d    Use time: %uus    TPS: %d\n\n", row_count, (uint32_t)ts, load_tps);
 		}
 	} 
 
@@ -348,7 +359,7 @@ int main (int argc, char **argv)
 		ts = timestamp_us() - ts;
 		insert_tps = (int64_t)row_count*1000000/ts;
 		if (!s_quiet) {
-			printf ("\nInsert rows: %d    Use time: %dus    TPS: %d\n\n", row_count, (int)ts, insert_tps);
+			printf ("\nInsert rows: %d    Use time: %uus    TPS: %d\n\n", row_count, (uint32_t)ts, insert_tps);
 		}
 	}
 
@@ -371,7 +382,7 @@ int main (int argc, char **argv)
 			ts = timestamp_us() - ts;
 			qps[r] = (int)((int64_t)i*1000000/ts);
 			if (!s_quiet) {
-				printf ("  Round: %d\tUse Time: %dus\tQPS: %d\n", r+1, (int)ts, qps[r]);
+				printf ("  Round: %d\tUse Time: %uus\tQPS: %d\n", r+1, (uint32_t)ts, qps[r]);
 			}
 		}
 		qsort (qps, 10, sizeof(qps[0]), int_cmp);
@@ -400,11 +411,11 @@ int main (int argc, char **argv)
 			ts = timestamp_us() - ts;
 			tps[r] = (int64_t)i*1000000/ts;
 			if (!s_quiet) {
-				printf ("  Round: %d\tUse Time: %dus\tTPS: %d\n", r+1, (int)ts, tps[r]);
+				printf ("  Round: %d\tUse Time: %uus\tTPS: %d\n", r+1, (uint32_t)ts, tps[r]);
 			}
 		}
 		qsort (tps, 10, sizeof(tps[0]), int_cmp);
-		update_tps = (tps[0] + tps[1] + tps[2]) / 3;
+		update_tps = (tps[0] + tps[1] + tps[2] + tps[3] + tps[4]) / 5;
 	}
 
 	if (delete_count > 0) {
@@ -422,7 +433,7 @@ int main (int argc, char **argv)
 		ts = timestamp_us() - ts;
 		delete_tps = (int64_t)i*1000000/ts;
 		if (!s_quiet) {
-			printf ("\nDelete: %d\tUse Time: %dus\tTPS: %d\n", i, (int)ts, delete_tps);
+			printf ("\nDelete: %d\tUse Time: %uus\tTPS: %d\n", i, (uint32_t)ts, delete_tps);
 		}
 	}
 
@@ -431,7 +442,9 @@ int main (int argc, char **argv)
 		printf ("%s Benchmark Result: %s Access=%s Key=%s Rows=%d\n", 
 						db_name, type_str[type], sequential?"Sequential":"Random", keyTypeStr(key), row_count);
 	}
-	printf ("%16s\t%8s\t%8s\t%8s\t%8s\t%8s\n", "DB", "Rows", insert_tps?"Insert":"Load", "Query", "Update", "Delete");
+	if (!s_quiet || !header) {
+		printf ("%16s\t%8s\t%8s\t%8s\t%8s\t%8s\n", "DB", "Rows", insert_tps?"Insert":"Load", "Query", "Update", "Delete");
+	}
 	printf ("%16s\t%8d\t%8d\t%8d\t%8d\t%8d\n", dbname, row_count, insert_tps+load_tps, query_qps, update_tps, delete_tps);
 
 	db_close ();

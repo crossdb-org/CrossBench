@@ -24,7 +24,7 @@ typedef struct Random {
 void rand_init(Random* rand_, uint32_t s)
 {
   rand_->seed_ = s & 0x7fffffffu;
-  /* Avoid bad seeds. */
+  // Avoid bad seeds.
   if (rand_->seed_ == 0 || rand_->seed_ == 2147483647L) {
     rand_->seed_ = 1;
   }
@@ -50,7 +50,7 @@ static uint64_t timestamp_us ()
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	return (uint64_t)(tv.tv_sec * 1000000 + tv.tv_usec);
+	return tv.tv_sec * 1000000LL + tv.tv_usec;
 }
 
 static inline uint32_t get_next_rand (Random *pRand, uint8_t *pMark, uint32_t max)
@@ -101,7 +101,7 @@ int main (int argc, char **argv)
 	int				cpuid = -1;
 
 	bool			sequential = false, verify = false, header = false;
-	int				insert_tps = 0, load_tps = 0, query_qps = 0, update_tps = 0, delete_tps = 0;
+	uint32_t		insert_tps = 0, load_tps = 0, query_qps = 0, update_tps = 0, delete_tps = 0;
 
 	while ((ch = getopt(argc, argv, "s:k:l:i:q:u:d:r:c:SVQHh")) != -1) {
 		switch (ch) {
@@ -204,18 +204,22 @@ int main (int argc, char **argv)
 		sprintf (name, "_benchmarkdb/%s", db_name);
 		if (0 == row_count) {
 			sprintf (cmd, "rm -rf %s", name);
-			system (cmd);
+			int rc = system (cmd);
+			(void)rc;
 		}
 		sprintf (cmd, "mkdir -p %s", name);
-		system (cmd);
+		int rc = system (cmd);
+		(void)rc;
 	} else {
 		sprintf (name, "/tmp/_benchmarkdb/%s", db_name);
 		if (0 == row_count) {
 			sprintf (cmd, "rm -rf %s", name);
-			system (cmd);
+			int rc = system (cmd);
+			(void)rc;
 		}
 		sprintf (cmd, "mkdir -p %s", name);
-		system (cmd);
+		int rc = system (cmd);
+		(void)rc;
 	}
 
 	if (0 == row_count) {
@@ -234,6 +238,8 @@ int main (int argc, char **argv)
 		delete_count = row_count;
 	}
 
+	srand (time(NULL));
+	
 	// rand init
 	uint8_t *pRandMark = (uint8_t*)malloc (row_count);
 	if (NULL == pRandMark) {
@@ -267,7 +273,7 @@ int main (int argc, char **argv)
 	route.birth 	= time (NULL);
 
 	if (verify) {
-		printf ("------ Verify Driver ------\n");
+		printf ("------ Verify %s ------\n", dbname);
 		printf ("Insert route\n");
 		db_insert (&route);
 
@@ -339,7 +345,7 @@ int main (int argc, char **argv)
 		}
 		db_commit ();
 		ts = timestamp_us() - ts;
-		load_tps = (int64_t)row_count*1000000/ts;
+		load_tps = row_count*1000000LL/ts;
 		if (!s_quiet) {
 			printf ("\nLoad rows: %d    Use time: %uus    TPS: %d\n\n", row_count, (uint32_t)ts, load_tps);
 		}
@@ -357,7 +363,7 @@ int main (int argc, char **argv)
 			db_insert (&route);
 		}
 		ts = timestamp_us() - ts;
-		insert_tps = (int64_t)row_count*1000000/ts;
+		insert_tps = row_count*1000000LL/ts;
 		if (!s_quiet) {
 			printf ("\nInsert rows: %d    Use time: %uus    TPS: %d\n\n", row_count, (uint32_t)ts, insert_tps);
 		}
@@ -409,7 +415,7 @@ int main (int argc, char **argv)
 				db_update (&route);
 			}
 			ts = timestamp_us() - ts;
-			tps[r] = (int64_t)i*1000000/ts;
+			tps[r] = update_count*1000000LL/ts;
 			if (!s_quiet) {
 				printf ("  Round: %d\tUse Time: %uus\tTPS: %d\n", r+1, (uint32_t)ts, tps[r]);
 			}
@@ -431,7 +437,7 @@ int main (int argc, char **argv)
 			db_delete (&route);
 		}
 		ts = timestamp_us() - ts;
-		delete_tps = (int64_t)i*1000000/ts;
+		delete_tps = delete_count*1000000LL/ts;
 		if (!s_quiet) {
 			printf ("\nDelete: %d\tUse Time: %uus\tTPS: %d\n", i, (uint32_t)ts, delete_tps);
 		}

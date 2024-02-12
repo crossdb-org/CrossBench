@@ -78,7 +78,6 @@ void crossdb_commit ()
 
 void crossdb_close ()
 {
-	cross_fieldsFree (hUpdBirthFlds);
 	cross_ret ret = cross_dbClose (hDb, 0);
 	CHECK (ret, "Failed to close DB");
 }
